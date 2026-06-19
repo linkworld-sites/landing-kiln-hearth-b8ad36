@@ -39,11 +39,28 @@ export default function ShopClient({ products }: { products: Product[] }) {
     const p = byId.get(i.product_id); return s + (p ? p.price_cents * i.quantity : 0);
   }, 0), [items, byId]);
 
+  // Only real backend products (UUID id) are sellable. The static prerender may
+  // briefly show the products.ts demo (slug ids) before the live refetch swaps
+  // in the backend catalog — guard add-to-cart so a stale demo item can never
+  // enter the cart and 404 at checkout (display id == checkout id).
+  const sellable = (id: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
   const onCheckout = async () => {
     if (!items.length) return;
+    // Self-heal a stale cart: localStorage may hold items whose ids are no
+    // longer in the live catalog (e.g. old demo-slug ids added before the
+    // backend catalog loaded). Drop those, check out only what the backend can
+    // actually price — otherwise checkout 404s on a phantom id.
+    const valid = items.filter((i) => byId.has(i.product_id));
+    items.filter((i) => !byId.has(i.product_id)).forEach((i) => remove(i.product_id));
+    if (!valid.length) {
+      setError("Your cart was out of date and has been cleared — please add items again.");
+      return;
+    }
     setError(null); setBusy(true);
     track("checkout");
-    const ok = await checkout(items);
+    const ok = await checkout(valid);
     setBusy(false);
     if (!ok) setError("Checkout couldn't be started right now. Please try again in a moment.");
   };
@@ -68,8 +85,8 @@ export default function ShopClient({ products }: { products: Product[] }) {
               <span className="tabular-nums opacity-70">{formatPrice(p.price_cents, p.currency)}</span>
             </div>
             {p.description ? <p className="mt-1 text-sm opacity-60">{p.description}</p> : null}
-            <button type="button" onClick={() => add(p)} className="mt-4 self-start border border-current px-5 py-2 text-sm uppercase tracking-wide transition-opacity hover:opacity-70">
-              Add to cart
+            <button type="button" onClick={() => add(p)} disabled={!sellable(p.id)} className="mt-4 self-start border border-current px-5 py-2 text-sm uppercase tracking-wide transition-opacity hover:opacity-70 disabled:opacity-40 disabled:cursor-not-allowed">
+              {sellable(p.id) ? "Add to cart" : "Loading…"}
             </button>
           </li>
         ))}
