@@ -6,9 +6,9 @@
  * storefront_walk). The managed `checkout()` handles hosted payment + redirect.
  * Neutral styling — inherits the site's fonts/colors.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Product } from "@/lib/checkout";
-import { checkout, formatPrice } from "@/lib/checkout";
+import { checkout, formatPrice, fetchProducts } from "@/lib/checkout";
 import { track } from "@/lib/funnel";
 import { useCart } from "@/components/CartContext";
 
@@ -16,11 +16,25 @@ export default function ShopClient({ products }: { products: Product[] }) {
   const { items, count, add, remove, clear } = useCart();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The catalog is data, not markup: always reflect the LIVE backend (the
+  // single source checkout prices from). Start with the server-passed list (so
+  // SSR / a static prerender still shows products), then refetch on mount so
+  // real backend ids — the only ones checkout can sell — replace any stale
+  // build-time/demo entries. This makes display id == checkout id without
+  // needing a rebuild when the catalog changes.
+  const [catalog, setCatalog] = useState<Product[]>(products);
+  useEffect(() => {
+    let alive = true;
+    fetchProducts().then((live) => {
+      if (alive && live.length) setCatalog(live);
+    });
+    return () => { alive = false; };
+  }, []);
   const byId = useMemo(() => {
     const m = new Map<string, Product>();
-    for (const p of products) m.set(p.id, p);
+    for (const p of catalog) m.set(p.id, p);
     return m;
-  }, [products]);
+  }, [catalog]);
   const total = useMemo(() => items.reduce((s, i) => {
     const p = byId.get(i.product_id); return s + (p ? p.price_cents * i.quantity : 0);
   }, 0), [items, byId]);
@@ -31,13 +45,13 @@ export default function ShopClient({ products }: { products: Product[] }) {
     track("checkout");
     const ok = await checkout(items);
     setBusy(false);
-    if (!ok) setError("Checkout is not available yet — connect payments in the cockpit.");
+    if (!ok) setError("Checkout couldn't be started right now. Please try again in a moment.");
   };
 
   return (
     <div className="grid gap-12 md:grid-cols-[1fr_320px]">
       <ul className="grid gap-8 sm:grid-cols-2">
-        {products.map((p) => (
+        {catalog.map((p) => (
           <li key={p.id} className="group flex flex-col">
             <div className="aspect-[4/5] w-full overflow-hidden rounded-lg bg-neutral-100">
               {p.image_url ? (
