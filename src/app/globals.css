@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+/* Small caps utility for Cormorant labels */
+.font-small-caps {
+  font-variant: small-caps;
+  letter-spacing: 0.12em;
+}
+
+/* Blog post body — styled to match brand */
+.post-body h2 { font-family: var(--font-cormorant), Georgia, serif; font-size: 1.8em; font-weight: 500; font-style: italic; margin: 1.8em 0 0.7em; }
+.post-body h3 { font-family: var(--font-cormorant), Georgia, serif; font-size: 1.4em; font-weight: 400; font-style: italic; margin: 1.5em 0 0.5em; }
+.post-body p { margin: 1.2em 0; line-height: 1.8; font-size: 1rem; }
+.post-body ul, .post-body ol { margin: 1em 0; padding-left: 1.5em; line-height: 1.8; }
+.post-body ul { list-style: disc; }
+.post-body ol { list-style: decimal; }
+.post-body a { text-decoration: underline; opacity: 0.8; }
+.post-body a:hover { opacity: 1; }
+.post-body blockquote { border-left: 2px solid #C4673A; padding-left: 1.5em; opacity: 0.8; margin: 2em 0; font-family: var(--font-cormorant), Georgia, serif; font-style: italic; font-size: 1.2em; }
+.post-body img { border-radius: 0.25em; margin: 2em 0; }
+.post-body strong { font-weight: 600; }
