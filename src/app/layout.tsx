@@ -3,6 +3,7 @@ import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { FunnelTracker } from "@/components/FunnelTracker";
 import { CookieConsent } from "@/components/CookieConsent";
+import { CartProvider } from "@/components/CartContext";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import "./globals.css";
@@ -33,11 +34,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${cormorant.variable} ${dmSans.variable}`}>
       <body className="bg-kiln-ash text-charred-oak font-dm antialiased">
         <FunnelTracker />
-        <SmoothScroll>
-          <Navigation />
-          {children}
-          <Footer />
-        </SmoothScroll>
+        <CartProvider>
+          <SmoothScroll>
+            <Navigation />
+            {children}
+            <Footer />
+          </SmoothScroll>
+        </CartProvider>
         <CookieConsent />
       </body>
     </html>

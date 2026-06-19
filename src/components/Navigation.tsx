@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/components/CartContext";
-import { CartProvider } from "@/components/CartContext";
 
 function NavInner() {
   const [scrolled, setScrolled] = useState(false);
@@ -127,9 +126,5 @@ function NavInner() {
 }
 
 export default function Navigation() {
-  return (
-    <CartProvider>
-      <NavInner />
-    </CartProvider>
-  );
+  return <NavInner />;
 }
